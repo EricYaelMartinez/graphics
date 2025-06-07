@@ -1,29 +1,41 @@
-
 export class CanvasLocal {
   //atributos
   protected graphics: CanvasRenderingContext2D;
-  protected rWidth:number;
-  protected rHeight:number;
+  protected canvas: HTMLCanvasElement;
+  protected rWidth:number = 10; // si hay mas barras, necesitas mas ancho logico
+  protected rHeight:number = 8;//
   protected maxX: number;
   protected maxY: number;
   protected pixelSize: number;
   protected centerX: number;
   protected centerY: number;
   
+  
       
   public constructor(g: CanvasRenderingContext2D, canvas: HTMLCanvasElement){
+    this.canvas = canvas;
     this.graphics = g;
-    this.rWidth = 12;
-    this.rHeight= 8;
+   //this.rWidth = 12;
+   //this.rHeight= 8;
     this.maxX = canvas.width - 1
     this.maxY = canvas.height - 1;
-    this.pixelSize = Math.max(this.rWidth / this.maxX, this.rHeight / this.maxY);
-    this.centerX = this.maxX/12;
-    this.centerY = this.maxY/8*7;
+    this.pixelSize = 1; //Calcula el tamaño el pixel Logico
+    this.centerX = 0;
+    this.centerY = 0;
   }
 
-  iX(x: number):number{return Math.round(this.centerX + x/this.pixelSize);}
-  iY(y: number):number{return Math.round(this.centerY - y / this.pixelSize); }
+  setEscalaSegunBarras(numBarras: number){
+    this.rWidth = numBarras * 2 + 4;
+    //this.maxX = this.canvas.width - 1;
+    //this.maxY = this.canvas.height -1;
+    this.pixelSize = Math.max(this.rWidth / this.maxX, this.rHeight / this.maxY);
+    this.centerX = this.maxX * 0.1;
+    this.centerY = this.maxY * 0.875;
+  }
+
+  iX(x: number):number{return Math.round(this.centerX + x/this.pixelSize);}//Convierte una cordenada logica X a coordenada deixeles 
+  iY(y: number):number{return Math.round(this.centerY - y / this.pixelSize); }//Convierte una cordenada Y a coordenada de pixeles(Eje invertido) 
+  
   drawLine(x1: number, y1: number, x2: number, y2:number) {
     this.graphics.beginPath();
     this.graphics.moveTo(x1, y1);
@@ -31,6 +43,7 @@ export class CanvasLocal {
     this.graphics.closePath();
     this.graphics.stroke();
   }
+
   drawRmboide(x1: number, y1: number, x2: number, y2: number,
   x3:number, y3:number, x4:number, y4:number, color:string) {
   
@@ -64,7 +77,6 @@ export class CanvasLocal {
       if (max < h[i])
         max = h[i];
     }
-    //
     let res:number;
     let pot: number = 10;
     //se calcula la potencia de 10 mayor al max para redondear el maximo de la grafica.
@@ -75,6 +87,7 @@ export class CanvasLocal {
     res = Math.ceil(max / pot) * pot;
     return res;
   }
+
   barra(x:number, y:number, alt:number):void{
     this.drawLine(this.iX(x), this.iY(0), this.iX(x-0.5), this.iY(0.5));
     this.drawLine(this.iX(x-0.5), this.iY(0.5), this.iX(x-0.5), this.iY(y+alt));
@@ -94,71 +107,69 @@ export class CanvasLocal {
     this.graphics.strokeStyle = 'black';
   }
 
-
-  paint() {
+  paint(h: number[], eti: string[], colors: string[]) {
     
-    //let h: number[] = [20, 100, 160, 420];
-    //let h: number[] = [1150, 1780, 860, 1260, 1500];
-    let h: number[] = [27, 10, 16,90,50,75];
-    let maxEsc: number;
-    let colors: string[]= ['magenta', 'red', 'green', 'yellow'];
+    //let h: number[] = [27,50,75,10,14,70, 90];
+    //let eti: string[] = ['matematicas', 'fisica', 'Computacion', 'Ecologia', 'Odontologia', 'Derecho', 'Arquitectura'];
+    //let colors: string[]= ['#6fd635', 'blue', 'green', '#f76d3a', 'red', '#08bf98', '#d4de0b'];
 
-    maxEsc = this.maxH(h);
-    let i=0;
-    for(let x= 0; x < 8; x+=(8/(h.length*1)) ){
-      this.graphics.strokeStyle = colors[i%4];
-      if(i<h.length)
-        this.barra(x,0, h[i++]*(this.rHeight-2)/maxEsc);
-    }
-    i=0;
-    for (let x = 0; x < 8; x += (8/(h.length*1)) ){
-      this.graphics.strokeStyle = colors[i%4];
-      if(i<h.length)
-        this.graphics.strokeText(h[i++]+"", this.iX(x), this.iY(-0.5));
-    }
-    
-/*
-    this.barra(3,0, 10*(this.rHeight-2)/maxEsc);
-
-    this.barra(5,0, 16*(this.rHeight-2)/maxEsc);
-    this.barra(7,0, 2*(this.rHeight-2)/maxEsc);
-    /*this.graphics.strokeStyle = 'black';
-    this.drawLine(this.iX(0), this.iY(0), this.iX(8), this.iY(0));
-    this.drawLine(this.iX(0), this.iY(0), this.iX(0), this.iY(6));
-    //las 6 unidades se dividen entre 4 periodos de lineas cada una 
-    //representara una escala de 1/4 del total maximo
-    let i = 0;
-    for (let y = 0.6; y <= 6; y += 1.35){
-      this.drawLine(this.iX(0.6), this.iY(y), this.iX(8), this.iY(y));
-      this.drawLine(this.iX(0), this.iY(y - 0.6), this.iX(0.6), this.iY(y));
-      this.graphics.strokeText((maxEsc*i/4)+"",this.iX(-0.5), this.iY(y-0.7));
-      i++;
-    }
-    this.graphics.strokeStyle = 'black';
-    let ind = 0;
-    for (let i = 0.5; i <=8; i += 2){
-      //this.graphics.strokeStyle = colors[ind];
-      this.graphics.fillStyle = colors[ind];
-      //console.log(this.rHeight*h[ind]/maxEsc)
-      this.drawLine(this.iX(i), this.iY(6 * h[ind] / maxEsc-0.1), this.iX(i), this.iY(0));
-      this.graphics.fillRect(this.iX(i), this.iY(6 * h[ind] / maxEsc-0.1), this.iX(2) - this.iX(1), this.iY(0.2) - this.iY(6 * h[ind] / maxEsc ));
-      this.drawRmboide(this.iX(i + 0.3), this.iY(6 * h[ind] / maxEsc + 0.2), this.iX(i + 1.3), this.iY(6 * h[ind] / maxEsc + 0.2),
-                      this.iX(i + 1), this.iY(6 * h[ind] / maxEsc-0.1), this.iX(i), this.iY(6 * h[ind] / maxEsc-0.1), colors[ind]);
-      this.drawRmboide(this.iX(i + 1), this.iY(6 * h[ind] / maxEsc-0.1), this.iX(i + 1.3), this.iY(6 * h[ind] / maxEsc + 0.2),
-                      this.iX(i+1.3), this.iY(0.4), this.iX(i+1), this.iY(0.1), colors[ind]) ;
-      ind++;
-    }
-    ind=0
-    for (let x = 0; x < 8; x += 2) {
-      this.graphics.strokeText(colors[ind++], this.iX(x+0.5), this.iY(-0.5));
+    this.setEscalaSegunBarras(h.length);
+   
+    const maxEsc = this.maxH(h);
+    // Líneas horizontales del eje Y
+    for (let i = 0; i <= 4; i++) {
+      const y = 6 * i / 4;
+      this.graphics.strokeStyle = 'gray';
+      this.drawLine(this.iX(0.5), this.iY(y), this.iX(h.length * 2), this.iY(y));
+      this.graphics.strokeStyle = 'black';
+      this.graphics.strokeText((maxEsc * i / 4).toFixed(0), this.iX(-0.5), this.iY(y));
     }
 
-    for (let y = 0; y< h.length; y++) {
-      this.graphics.strokeText(colors[y], this.iX(9), this.iY(5 - y));
-      this.graphics.fillStyle = colors[y];
-      this.graphics.fillRect(this.iX(8.5), this.iY(5 - y), 10, 10);
-    }*/
-    
+    // Barras
+    for (let i = 0; i < h.length; i++) {
+      const x = i * 2 + 0.5;
+      const altura = 6 * h[i] / maxEsc;
+
+      this.graphics.strokeStyle = 'black';
+      this.graphics.fillStyle = colors[i];
+
+      // Parte frontal
+      this.graphics.fillRect(this.iX(x), this.iY(altura), this.iX(1) - this.iX(0), this.iY(0) - this.iY(altura));
+
+      // Parte superior (romboide)
+      this.drawRmboide(
+        this.iX(x), this.iY(altura),
+        this.iX(x + 1), this.iY(altura),
+        this.iX(x + 1.3), this.iY(altura + 0.2),
+        this.iX(x + 0.3), this.iY(altura + 0.2),
+        colors[i]
+      );
+
+      // Parte lateral
+      this.drawRmboide(
+        this.iX(x + 1), this.iY(altura),
+        this.iX(x + 1.3), this.iY(altura + 0.2),
+        this.iX(x + 1.3), this.iY(0.2),
+        this.iX(x + 1), this.iY(0),
+        colors[i]
+      );
+
+      // Etiqueta debajo de la barra
+      this.graphics.fillStyle = 'black';
+      this.graphics.strokeText(eti[i], this.iX(x), this.iY(-0.5));
+      }
+
+      const leyendaInicoY = 5;
+      const saltoLeyenda = 0.8;
+      for(let y = 0; y < h.length; y++){
+        const posY = leyendaInicoY - y * saltoLeyenda;
+        this.graphics.fillStyle = colors[y];
+        this.graphics.fillRect(this.iX(h.length * 2 + 0.5), this.iY(posY), 10, 10);
+        this.graphics.fillStyle = 'black';
+        this.graphics.strokeText(eti[y], this.iX(h.length * 2 + 1), this.iY(posY - 0.1));
+      }
+
   }
 
 }
+
